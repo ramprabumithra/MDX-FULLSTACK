@@ -166,38 +166,38 @@
         <!-- Personal Details Form -->
         <p>
             <strong>First Name:</strong>
-            <input v-model="order.firstName" type="text" @input="saveOrderDetails" />
+            <input v-model="order.firstName" type="text" @input="saveDetails" />
         </p>
         <p>
             <strong>Last Name:</strong>
-            <input v-model="order.lastName" type="text" @input="saveOrderDetails" />
+            <input v-model="order.lastName" type="text" @input="saveDetails" />
         </p>
         <p>
             <strong>Address:</strong>
-            <input v-model="order.address" type="text" @input="saveOrderDetails" />
+            <input v-model="order.address" type="text" @input="saveDetails" />
         </p>
         <p>
             <strong>City:</strong>
-            <select v-model="order.city" @change="saveOrderDetails">
+            <select v-model="order.city" @change="saveDetails">
                 <option v-for="(city, key) in cities" :value="city">{{ key }}</option>
             </select>
         </p>
         <p>
             <strong>Zip/Postal Code:</strong>
-            <input v-model.number="order.zip" type="number" @input="saveOrderDetails" />
+            <input v-model.number="order.zip" type="number" @input="saveDetails" />
         </p>
         <p>
-            <input type="checkbox" id="gift" v-model="order.gift" @change="saveOrderDetails">
+            <input type="checkbox" id="gift" v-model="order.gift" @change="saveDetails">
             <label for="gift">Send as a Gift</label>
         </p>
         <p>
-            <input type="radio" id="home" value="Home" v-model="order.method" @change="saveOrderDetails">
+            <input type="radio" id="home" value="Home" v-model="order.method" @change="saveDetails">
             <label for="home">Home</label>
-            <input type="radio" id="business" value="Business" v-model="order.method" @change="saveOrderDetails">
+            <input type="radio" id="business" value="Business" v-model="order.method" @change="saveDetails">
             <label for="business">Business</label>
         </p>
 
-        <button :disabled="!isFormComplete" @click="submitForm">Place Order</button>
+        <button :disabled="!completedForm" @click="submitForm">Place Order</button>
     </div>
 
     <script>
@@ -229,7 +229,7 @@
             cartTotal() {
                 return this.cart.reduce((total, item) => total + item.price * item.quantity, 0);
             },
-            isFormComplete() {
+            completedForm() {
                 return (
                     this.order.firstName &&
                     this.order.lastName &&
@@ -254,12 +254,12 @@
                     quantity: item.quantity,
                 }));
             },
-            loadOrderDetails() {
+            loadDetails() {
                 // Initialize order from localStorage
                 const orderData = JSON.parse(localStorage.getItem('order')) || {};
                 Object.assign(this.order, orderData);
             },
-            saveOrderDetails() {
+            saveDetails() {
                 // Save order details to localStorage
                 localStorage.setItem('order', JSON.stringify(this.order));
             },
@@ -292,7 +292,7 @@
                 .then(data => {
                     console.log('Order placed:', data);
                     this.clearCart();  // Clear cart after placing order
-                    this.clearOrderDetails();  // Clear order details form
+                    this.clearDetails();  // Clear order details form
                     alert('Order placed successfully!');
                 })
                 .catch(error => {
@@ -301,7 +301,7 @@
                 });
             },
 
-            clearOrderDetails() {
+            clearDetails() {
                 // Reset order details after order is placed
                 this.order.firstName = '';
                 this.order.lastName = '';
@@ -314,7 +314,7 @@
         },
         mounted() {
             this.loadCart();
-            this.loadOrderDetails();
+            this.loadDetails();
         }
     });
     </script>
