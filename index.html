@@ -75,7 +75,7 @@
                     <p>{{ product.location }}</p>
                     <p v-if="product.availability > 0">{{ product.availability }} seats available</p>
                     <p v-else>All out!</p>
-                    <p v-if="product.availability > 0 && product.availability <= 5" class="low-stock-warning">Only {{ product.availability }} left!</p>
+                    <p v-if="product.availability > 0 && product.availability <= 3" class="low-stock-warning">Only {{ product.availability }} left!</p>
                     <p>${{ product.price }}</p>
                     <button @click="addToCart(product)" :disabled="product.availability === 0">
                         {{ product.availability === 0 ? 'Unavailable' : 'ADD TO CART' }}
@@ -108,22 +108,23 @@
             searchQuery: '',
             sortOrder: '',
             products: [
-                { id: 1000, title: 'Maths', location: 'London', availability: 25, price: 8, img: 'assets/Math-Symbol.png', rating: 3 },
-                { id: 1001, title: 'English', location: 'Dubai', availability: 12, price: 16, img: 'assets/English-Symbol.png', rating: 4 },
-                { id: 1002, title: 'Science', location: 'Mauritius', availability: 15, price: 32, img: 'assets/Science-Symbol.png', rating: 5 },
-                { id: 1003, title: 'History', location: 'London', availability: 12, price: 64, img: 'assets/History-Symbol.png', rating: 4 },
-                { id: 1004, title: 'Computer', location: 'Dubai', availability: 15, price: 128, img: 'assets/Computer-Symbol.png', rating: 5 },
-                { id: 1005, title: 'Geography', location: 'Mauritius', availability: 15, price: 64, img: 'assets/Geography-Symbol.png', rating: 3 },
-                { id: 1006, title: 'Sports', location: 'Dubai', availability: 25, price: 128, img: 'assets/Sports-Symbol.png', rating: 4 },
-                { id: 1007, title: 'Music', location: 'London', availability: 15, price: 32, img: 'assets/Music-Symbol.png', rating: 2 },
-                { id: 1008, title: 'French', location: 'Mauritius', availability: 12, price: 16, img: 'assets/French-Symbol.png', rating: 4 },
-                { id: 1009, title: 'Spanish', location: 'Dubai', availability: 12, price: 16, img: 'assets/Spanish-Symbol.png', rating: 5 }
+                { id: 1000, title: 'Maths', location: 'London', availability: 5, price: 8, img: 'assets/Math-Symbol.png', rating: 3 },
+                { id: 1001, title: 'English', location: 'Dubai', availability: 5, price: 16, img: 'assets/English-Symbol.png', rating: 4 },
+                { id: 1002, title: 'Science', location: 'Mauritius', availability: 5, price: 32, img: 'assets/Science-Symbol.png', rating: 5 },
+                { id: 1003, title: 'History', location: 'London', availability: 5, price: 64, img: 'assets/History-Symbol.png', rating: 4 },
+                { id: 1004, title: 'Computer', location: 'Dubai', availability: 5, price: 128, img: 'assets/Computer-Symbol.png', rating: 5 },
+                { id: 1005, title: 'Geography', location: 'Mauritius', availability: 5, price: 64, img: 'assets/Geography-Symbol.png', rating: 3 },
+                { id: 1006, title: 'Sports', location: 'Dubai', availability: 5, price: 128, img: 'assets/Sports-Symbol.png', rating: 4 },
+                { id: 1007, title: 'Music', location: 'London', availability: 5, price: 32, img: 'assets/Music-Symbol.png', rating: 2 },
+                { id: 1008, title: 'French', location: 'Mauritius', availability: 5, price: 16, img: 'assets/French-Symbol.png', rating: 4 },
+                { id: 1009, title: 'Spanish', location: 'Dubai', availability: 5, price: 16, img: 'assets/Spanish-Symbol.png', rating: 5 }
             ]
         },
         computed: {
             filterAndSort() {
-                let filteredProds = this.products.filter(product => 
-                    product.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+                let filteredProds = this.products.filter(product =>
+                    product.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                    product.location.toLowerCase().includes(this.searchQuery.toLowerCase())
                 );
 
                 if (this.sortOrder === 'price-asc') {
@@ -139,6 +140,7 @@
                 return filteredProds;
             },
 
+
             cartItems() {
                 return this.cart.reduce((total, item) => total + item.quantity, 0);
             }
@@ -146,7 +148,7 @@
         methods: {
             addToCart(product) {
                 if (product.availability > 0) {
-                    product.availability -= 1;  // Decrease the availability
+                    product.availability -= 1;  
                     const cartItem = this.cart.find(item => item.id === product.id);
                     if (cartItem) {
                         cartItem.quantity += 1;
