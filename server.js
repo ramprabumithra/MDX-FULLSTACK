@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+require('dotenv').config();
 app.use(express.json());
 app.set('port', 3000);
 
@@ -14,8 +15,10 @@ app.use((req, res, next) => {
 
 
 const MongoClient = require('mongodb').MongoClient;
+const mongoURI = process.env.MONGO_URI;
 let db;
-MongoClient.connect('mongodb+srv://ramprabumithra:ramasita@cluster0.fyuon.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', (err, client) => {
+
+MongoClient.connect(mongoURI, (err, client) => {
     if (err) {
         console.error('Failed to connect to MongoDB:', err);
         process.exit(1);
