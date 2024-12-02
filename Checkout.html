@@ -1,7 +1,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vue.js Pet Store Checkout</title>
+    <title>MDX Checkout Page</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
@@ -141,7 +141,7 @@
     <div id="app">
         <h2>Checkout</h2>
         
-        <!-- Display Cart Items -->
+        
         <div v-if="cart.length > 0">
             <h3>Your Cart</h3>
             <div v-for="item in cart" :key="item.id" class="cart-item">
@@ -163,7 +163,7 @@
             <p>Your cart is empty.</p>
         </div>
 
-        <!-- Personal Details Form -->
+        
         <p>
             <strong>First Name:</strong>
             <input v-model="order.firstName" type="text" @input="saveDetails" />
@@ -202,121 +202,126 @@
 
     <script>
     new Vue({
-        el: '#app',
-        data: {
-            cart: [],
-            order: {
-                firstName: '',
-                lastName: '',
-                address: '',
-                city: '',
-                zip: '',
-                gift: false,
-                method: '',
-                lessons: []  // Adding lessons to the order
-            },
-            cities: {
-                DXB: 'Dubai',
-                ADB: 'Abu Dhabi',
-                SHJ: 'Sharjah',
-                AJM: 'Ajman',
-                UAQ: 'Umm Al Quwain',
-                RAK: 'Ras Al Khaimah',
-                FUJ: 'Fujairah'
-            }
+    el: '#app',
+    data: {
+        cart: [],
+        order: {
+            firstName: '',
+            lastName: '',
+            address: '',
+            city: '',
+            zip: '',
+            gift: false,
+            method: '',
+            lessons: []  
         },
-        computed: {
-            cartTotal() {
-                return this.cart.reduce((total, item) => total + item.price * item.quantity, 0);
-            },
-            completedForm() {
-                return (
-                    this.order.firstName &&
-                    this.order.lastName &&
-                    this.order.address &&
-                    this.order.city &&
-                    this.order.zip &&
-                    this.order.method &&
-                    this.cart.length > 0
-                );
-            }
+        cities: {
+            DXB: 'Dubai',
+            ADB: 'Abu Dhabi',
+            SHJ: 'Sharjah',
+            AJM: 'Ajman',
+            UAQ: 'Umm Al Quwain',
+            RAK: 'Ras Al Khaimah',
+            FUJ: 'Fujairah'
+        }
+    },
+    computed: {
+        completedForm() {
+            // Check if all the fields are filled and valid
+            return this.order.firstName &&
+                   this.order.lastName &&
+                   this.order.address &&
+                   this.order.city &&
+                   this.order.zip &&
+                   this.order.method;
         },
-        methods: {
-            loadCart() {
-                // Initialize cart from localStorage
-                const cartData = JSON.parse(localStorage.getItem('cart')) || [];
-                this.cart = cartData;
+        cartTotal() {
+        return this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    }
+    },
+    methods: {
+        validateInputs() {
+            const textFields = [this.order.firstName, this.order.lastName, this.order.address];
+            const zipCode = this.order.zip;
 
-                // Populate the lessons array with cart data
-                this.order.lessons = cartData.map(item => ({
+            const containsNumber = (text) => /\d/.test(text);
+            if (textFields.some(containsNumber)) {
+                alert('Text fields should not contain numbers.');
+                return false;
+            }
+
+            if (!/^\d+$/.test(zipCode)) {
+                alert('Zip/Postal Code should contain only numbers.');
+                return false;
+            }
+
+            return true;
+        },
+        saveDetails() {
+            if (this.validateInputs()) {
+                localStorage.setItem('order', JSON.stringify(this.order));
+            }
+        },
+        loadCart() {
+            const cartData = JSON.parse(localStorage.getItem('cart')) || [];
+            this.cart = cartData;
+            this.order.lessons = cartData.map(item => ({
+                lessonTitle: item.title,
+                price: item.price,
+                quantity: item.quantity,
+            }));
+        },
+        loadDetails() {
+            const orderData = JSON.parse(localStorage.getItem('order')) || {};
+            Object.assign(this.order, orderData);
+        },
+        clearCart() {
+            this.cart = [];
+            localStorage.removeItem('cart');
+        },
+        clearDetails() {
+            this.order.firstName = '';
+            this.order.lastName = '';
+            this.order.address = '';
+            this.order.city = '';
+            this.order.zip = '';
+            this.order.gift = false;
+            this.order.method = '';
+            localStorage.removeItem('order');
+        },
+        submitForm() {
+            const orderData = {
+                ...this.order,
+                lessons: this.cart.map(item => ({
                     lessonTitle: item.title,
                     price: item.price,
-                    quantity: item.quantity,
-                }));
-            },
-            loadDetails() {
-                // Initialize order from localStorage
-                const orderData = JSON.parse(localStorage.getItem('order')) || {};
-                Object.assign(this.order, orderData);
-            },
-            saveDetails() {
-                // Save order details to localStorage
-                localStorage.setItem('order', JSON.stringify(this.order));
-            },
-            clearCart() {
-                // Clear cart data from both the state and localStorage
-                this.cart = [];
-                localStorage.removeItem('cart');
-            },
+                    quantity: item.quantity
+                }))
+            };
 
-            submitForm() {
-                // Prepare the order data
-                const orderData = {
-                    ...this.order,
-                    lessons: this.cart.map(item => ({
-                        lessonTitle: item.title,
-                        price: item.price,
-                        quantity: item.quantity
-                    }))
-                };
-
-                // Send order data to the backend (including the lessons)
-                fetch('http://localhost:3000/placeOrder', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(orderData),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Order placed:', data);
-                    this.clearCart();  // Clear cart after placing order
-                    this.clearDetails();  // Clear order details form
-                    alert('Order placed successfully!');
-                })
-                .catch(error => {
-                    console.error('Error placing order:', error);
-                    alert('Failed to place order.');
-                });
-            },
-
-            clearDetails() {
-                // Reset order details after order is placed
-                this.order.firstName = '';
-                this.order.lastName = '';
-                this.order.address = '';
-                this.order.city = '';
-                this.order.zip = '';
-                this.order.gift = false;
-                this.order.method = '';
-            }
-        },
-        mounted() {
-            this.loadCart();
-            this.loadDetails();
+            fetch('http://localhost:3000/placeOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                this.clearCart();
+                this.clearDetails();
+                alert('Order placed successfully!');
+            })
+            .catch(error => {
+                alert('Failed to place order.');
+            });
         }
-    });
+    },
+    mounted() {
+        this.loadCart();
+        this.loadDetails();
+    }
+});
     </script>
 </body>
 </html>
