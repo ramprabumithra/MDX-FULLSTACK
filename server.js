@@ -1,327 +1,126 @@
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Vue.js Pet Store Checkout</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+const express = require('express');
+const app = express();
+app.use(express.json());
+app.set('port', 3000);
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #C1BFFA;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            margin: 0;
-        }
 
-        #app {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 30px;
-            background-color: white;
-            border: 2px solid #1B1B1B;
-            border-radius: 16px;
-            box-sizing: border-box;
-            box-shadow: 6px 6px 0px #1B1B1B;
-            width: 48vw;
-            margin-top: 50px;
-            margin-bottom: 80px;
-        }
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+    res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
+    next();
+});
 
-        h2 {
-            font-size: 2rem;
-            font-weight: 800;
-            color: #333;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #1B1B1B;
-            padding-bottom: 10px;
-        }
 
-        label {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #555;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        select {
-            display: block;
-            width: 100%;
-            max-width: 90%;
-            padding: 10px;
-            margin: 15px 0;
-            border: 2px solid #1B1B1B;
-            border-radius: 16px;
-            background: #FFFFFF;
-            transition: 0.2s ease;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            background-color: #F9E450;
-            border: 3px solid #1B1B1B;
-        }
-
-        button {
-            width: 141px;
-            height: 56px;
-            background-color: #F9E450;
-            border: 2px solid #1B1B1B;
-            border-radius: 16px;
-            font-weight: 800;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.2s ease-out, box-shadow 0.2s;
-        }
-
-        button:hover {
-            background-color: #FFBB38;
-            box-shadow: 0 0 0 4px #C1BFFA;
-        }
-
-        .cart-item {
-            border-bottom: 2px solid #ddd;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            background-color: #F9F9F9;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .cart-item:last-child {
-            border-bottom: none;
-        }
-
-        .cart-item .details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .cart-item .details p {
-            margin: 5px 0;
-            color: #555;
-        }
-
-        .cart-item .item-summary {
-            display: flex;
-            flex-direction: column;
-            text-align: right;
-        }
-
-        .cart-item .item-summary p {
-            margin: 5px 0;
-        }
-
-        .cart-item img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            margin-right: 15px;
-            border-radius: 8px;
-        }
-
-        .grand-total {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
-            margin-top: 20px;
-            text-align: right;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
-</head>
-<body>
-    <div id="app">
-        <h2>Checkout</h2>
-        
-        
-        <div v-if="cart.length > 0">
-            <h3>Your Cart</h3>
-            <div v-for="item in cart" :key="item.id" class="cart-item">
-                <img :src="item.img" alt="Product Image" />
-                <div class="details">
-                    <p><strong>{{ item.title }}</strong></p>
-                    <p>Price: ${{ item.price }}</p>
-                    <p>Quantity: {{ item.quantity }}</p>
-                </div>
-                <div class="item-summary">
-                    <p><strong>Total: ${{ item.price * item.quantity }}</strong></p>
-                </div>
-            </div>
-            <div class="grand-total">
-                <p><strong>Grand Total: ${{ cartTotal }}</strong></p>
-            </div>
-        </div>
-        <div v-else>
-            <p>Your cart is empty.</p>
-        </div>
-
-        
-        <p>
-            <strong>First Name:</strong>
-            <input v-model="order.firstName" type="text" @input="saveDetails" />
-        </p>
-        <p>
-            <strong>Last Name:</strong>
-            <input v-model="order.lastName" type="text" @input="saveDetails" />
-        </p>
-        <p>
-            <strong>Address:</strong>
-            <input v-model="order.address" type="text" @input="saveDetails" />
-        </p>
-        <p>
-            <strong>City:</strong>
-            <select v-model="order.city" @change="saveDetails">
-                <option v-for="(city, key) in cities" :value="city">{{ key }}</option>
-            </select>
-        </p>
-        <p>
-            <strong>Zip/Postal Code:</strong>
-            <input v-model.number="order.zip" type="number" @input="saveDetails" />
-        </p>
-        <p>
-            <input type="checkbox" id="gift" v-model="order.gift" @change="saveDetails">
-            <label for="gift">Send as a Gift</label>
-        </p>
-        <p>
-            <input type="radio" id="home" value="Home" v-model="order.method" @change="saveDetails">
-            <label for="home">Home</label>
-            <input type="radio" id="business" value="Business" v-model="order.method" @change="saveDetails">
-            <label for="business">Business</label>
-        </p>
-
-        <button :disabled="!completedForm" @click="submitForm">Place Order</button>
-    </div>
-
-    <script>
-    new Vue({
-    el: '#app',
-    data: {
-        cart: [],
-        order: {
-            firstName: '',
-            lastName: '',
-            address: '',
-            city: '',
-            zip: '',
-            gift: false,
-            method: '',
-            lessons: []  
-        },
-        cities: {
-            DXB: 'Dubai',
-            ADB: 'Abu Dhabi',
-            SHJ: 'Sharjah',
-            AJM: 'Ajman',
-            UAQ: 'Umm Al Quwain',
-            RAK: 'Ras Al Khaimah',
-            FUJ: 'Fujairah'
-        }
-    },
-    computed: {
-        completedForm() {
-            // Check if all the fields are filled and valid
-            return this.order.firstName &&
-                   this.order.lastName &&
-                   this.order.address &&
-                   this.order.city &&
-                   this.order.zip &&
-                   this.order.method;
-        },
-        cartTotal() {
-        return this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+const MongoClient = require('mongodb').MongoClient;
+let db;
+MongoClient.connect('mongodb+srv://ramprabumithra:ramasita@cluster0.fyuon.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', (err, client) => {
+    if (err) {
+        console.error('Failed to connect to MongoDB:', err);
+        process.exit(1);
     }
-    },
-    methods: {
-        validateInputs() {
-            const textFields = [this.order.firstName, this.order.lastName, this.order.address];
-            const zipCode = this.order.zip;
+    db = client.db('CourseWork');
+    console.log('Connected to MongoDB');
+});
 
-            const containsNumber = (text) => /\d/.test(text);
-            if (textFields.some(containsNumber)) {
-                alert('Text fields should not contain numbers.');
-                return false;
-            }
 
-            if (!/^\d+$/.test(zipCode)) {
-                alert('Zip/Postal Code should contain only numbers.');
-                return false;
-            }
+app.get('/', (req, res, next) => {
+    res.send('Select a collection, e.g., /collections/Lessons');
+});
 
-            return true;
-        },
-        saveDetails() {
-            if (this.validateInputs()) {
-                localStorage.setItem('order', JSON.stringify(this.order));
-            }
-        },
-        loadCart() {
-            const cartData = JSON.parse(localStorage.getItem('cart')) || [];
-            this.cart = cartData;
-            this.order.lessons = cartData.map(item => ({
-                lessonTitle: item.title,
-                price: item.price,
-                quantity: item.quantity,
-            }));
-        },
-        loadDetails() {
-            const orderData = JSON.parse(localStorage.getItem('order')) || {};
-            Object.assign(this.order, orderData);
-        },
-        clearCart() {
-            this.cart = [];
-            localStorage.removeItem('cart');
-        },
-        clearDetails() {
-            this.order.firstName = '';
-            this.order.lastName = '';
-            this.order.address = '';
-            this.order.city = '';
-            this.order.zip = '';
-            this.order.gift = false;
-            this.order.method = '';
-            localStorage.removeItem('order');
-        },
-        submitForm() {
-            const orderData = {
-                ...this.order,
-                lessons: this.cart.map(item => ({
-                    lessonTitle: item.title,
-                    price: item.price,
-                    quantity: item.quantity
-                }))
-            };
+app.param('collectionName', (req, res, next, collectionName) => {
+    req.collection = db.collection(collectionName);
+    return next();
+});
 
-            fetch('http://localhost:3000/placeOrder', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData),
-            })
-            .then(response => response.json())
-            .then(data => {
-                this.clearCart();
-                this.clearDetails();
-                alert('Order placed successfully!');
-            })
-            .catch(error => {
-                alert('Failed to place order.');
-            });
+
+app.get('/collections/:collectionName', (req, res, next) => {
+    req.collection.find({}).toArray((e, results) => {
+        if (e) return next(e);
+        res.send(results);
+    });
+});
+
+app.post('/collections/:collectionName', (req, res, next) => {
+    req.collection.insert(req.body, (e, results) => {
+        if (e) return next(e);
+        res.send(results.ops);
+    });
+});
+
+const ObjectID = require('mongodb').ObjectID;
+app.get('/collections/:collectionName/:id', (req, res, next) => {
+    req.collection.findOne({ _id: new ObjectID(req.params.id) }, (e, result) => {
+        if (e) return next(e);
+        res.send(result);
+    });
+});
+
+app.put('/collections/:collectionName/:lessonTitle', (req, res, next) => {
+    req.collection.findOne({ lessonTitle: req.params.lessonTitle }, (err, lesson) => {
+        if (err) return next(err);
+        if (!lesson) {
+            return res.status(404).send({ msg: 'Lesson not found' });
         }
-    },
-    mounted() {
-        this.loadCart();
-        this.loadDetails();
+
+        req.collection.update(
+            { lessonTitle: req.params.lessonTitle },
+            { $set: req.body },
+            { safe: true, multi: false },
+            (e, result) => {
+                if (e) return next(e);
+                res.send((result.result.n === 1) ? { msg: 'success' } : { msg: 'error' });
+            }
+        );
+    });
+});
+
+app.post('/placeOrder', async (req, res) => {
+    const order = req.body; 
+    const lessons = order.lessons;
+
+    try {
+        
+        for (const lesson of lessons) {
+            const Doc = await db.collection('Lessons').findOne({ lessonTitle: lesson.lessonTitle });
+            if (!Doc) {
+                return res.status(404).json({ msg: `Lesson ${lesson.lessonTitle} not found.` });
+            }
+
+            if (Doc.availability < lesson.quantity) {
+                return res.status(400).json({ msg: `Not enough availability for ${lesson.lessonTitle}. Only ${Doc.availability} spots available.` });
+            }
+
+            
+            await db.collection('Lessons').updateOne(
+                { lessonTitle: lesson.lessonTitle },
+                { $inc: { availability: -lesson.quantity } }
+            );
+        }
+
+        
+        await db.collection('Orders').insertOne(order);
+
+        
+        res.status(200).json({ msg: 'Order placed successfully' });
+    } catch (error) {
+        console.error('Error placing order:', error);
+        res.status(500).json({ msg: 'Failed to place order' });
     }
 });
-    </script>
-</body>
-</html>
+
+
+app.delete('/collections/:collectionName/:id', (req, res, next) => {
+    req.collection.deleteOne(
+        { _id: ObjectID(req.params.id) }, (e, result) => {
+            if (e) return next(e);
+            res.send((result.result.n === 1) ?
+                { msg: 'success' } : { msg: 'error' });
+        });
+});
+
+
+app.listen(3000, () => {
+    console.log('Express.js server running at localhost:3000');
+});
