@@ -1,8 +1,26 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const app = express();
 app.use(express.json());
 app.set('port', 3000);
 
+app.use((req, res, next) => {
+    console.log(`${req.method} request for ${req.url} at ${new Date().toISOString()}`);
+    next();
+});
+
+app.use('/lesson-images', express.static(path.join(__dirname, 'lesson-images')));
+
+app.use('/lesson-images/:imageName', (req, res, next) => {
+    const imagePath = path.join(__dirname, 'lesson-images', req.params.imageName);
+    fs.access(imagePath, fs.constants.F_OK, (err) => {
+        if (err) {
+            return res.status(404).send({ msg: 'Image not found.' });
+        }
+        next();
+    });
+});
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,7 +29,6 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
     next();
 });
-
 
 const MongoClient = require('mongodb').MongoClient;
 let db;
@@ -24,7 +41,6 @@ MongoClient.connect('mongodb+srv://ramprabumithra:ramasita@cluster0.fyuon.mongod
     console.log('Connected to MongoDB');
 });
 
-
 app.get('/', (req, res, next) => {
     res.send('Select a collection, e.g., /collections/Lessons');
 });
@@ -33,7 +49,6 @@ app.param('collectionName', (req, res, next, collectionName) => {
     req.collection = db.collection(collectionName);
     return next();
 });
-
 
 app.get('/collections/:collectionName', (req, res, next) => {
     req.collection.find({}).toArray((e, results) => {
@@ -81,7 +96,6 @@ app.post('/placeOrder', async (req, res) => {
     const lessons = order.lessons;
 
     try {
-        
         for (const lesson of lessons) {
             const Doc = await db.collection('Lessons').findOne({ lessonTitle: lesson.lessonTitle });
             if (!Doc) {
@@ -92,17 +106,14 @@ app.post('/placeOrder', async (req, res) => {
                 return res.status(400).json({ msg: `Not enough availability for ${lesson.lessonTitle}. Only ${Doc.availability} spots available.` });
             }
 
-            
             await db.collection('Lessons').updateOne(
                 { lessonTitle: lesson.lessonTitle },
                 { $inc: { availability: -lesson.quantity } }
             );
         }
 
-        
         await db.collection('Orders').insertOne(order);
 
-        
         res.status(200).json({ msg: 'Order placed successfully' });
     } catch (error) {
         console.error('Error placing order:', error);
@@ -110,16 +121,13 @@ app.post('/placeOrder', async (req, res) => {
     }
 });
 
-
 app.delete('/collections/:collectionName/:id', (req, res, next) => {
     req.collection.deleteOne(
         { _id: ObjectID(req.params.id) }, (e, result) => {
             if (e) return next(e);
-            res.send((result.result.n === 1) ?
-                { msg: 'success' } : { msg: 'error' });
+            res.send((result.result.n === 1) ? { msg: 'success' } : { msg: 'error' });
         });
 });
-
 
 app.listen(3000, () => {
     console.log('Express.js server running at localhost:3000');
